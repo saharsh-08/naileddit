@@ -1,0 +1,45 @@
+{
+  "name": "naileddit-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -w",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/cors": "2.8.19",
+    "@types/express": "5.0.6",
+    "@types/node": "26.1.1",
+    "nodemon": "3.1.10",
+    "tsx": "4.23.1",
+    "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "@apollo/server": "5.5.1",
+    "@as-integrations/express5": "1.1.2",
+    "@mikro-orm/cli": "7.1.7",
+    "@mikro-orm/core": "7.1.7",
+    "@mikro-orm/decorators": "7.1.7",
+    "@mikro-orm/migrations": "7.1.7",
+    "@mikro-orm/postgresql": "7.1.7",
+    "@mikro-orm/reflection": "7.1.7",
+    "cors": "2.8.6",
+    "express": "5.2.1",
+    "graphql": "16.12.0",
+    "graphql-scalars": "1.25.0",
+    "pg": "8.22.0",
+    "reflect-metadata": "0.2.2",
+    "type-graphql": "2.0.0-rc.4"
+  },
+  "mikro-orm": {
+    "configPaths": [
+      "./src/mikro-orm.config.ts",
+      "./dist/mikro-orm.config.js"
+    ]
+  }
+}
