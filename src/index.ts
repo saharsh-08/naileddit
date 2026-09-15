@@ -10,41 +10,40 @@ import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { MyContext } from "./types";
 
-
 const main = async () => {
-    const orm = await MikroORM.init(mikroOrmConfig);
-    // Running migrations to create the post table in the database
-    await orm.migrator.up();
+  const orm = await MikroORM.init(mikroOrmConfig);
+  // Running migrations to create the post table in the database
+  await orm.migrator.up();
 
-    const app = express();
+  const app = express();
 
-    const apolloServer = new ApolloServer<MyContext>({
-        schema: await buildSchema({
-            resolvers: [HelloResolver, PostResolver],
-            validate: false,
-        }),
-    });
+  const apolloServer = new ApolloServer<MyContext>({
+    schema: await buildSchema({
+      resolvers: [HelloResolver, PostResolver],
+      validate: false,
+    }),
+  });
 
-    await apolloServer.start();
+  await apolloServer.start();
 
-    app.use(
-        '/graphql',
-        cors(),
-        express.json(),
-        expressMiddleware(apolloServer, {
-            context: async () => ({ em: orm.em }),
-        }),
-    );
+  app.use(
+    "/graphql",
+    cors(),
+    express.json(),
+    expressMiddleware(apolloServer, {
+      context: async () => ({ em: orm.em }),
+    }),
+  );
 
-    app.listen(4000, () => {
-        console.log("Server started on localhost:4000");
-    });
+  app.listen(4000, () => {
+    console.log("Server started on localhost:4000");
+  });
 
-    // Creating a record in the post entity
-    // const em = orm.em.fork();
-    // const post = em.create(Post, { id: 1, title: "My First Post"});
-    // em.persist(post);
-    // await em.flush();
+  // Creating a record in the post entity
+  // const em = orm.em.fork();
+  // const post = em.create(Post, { id: 1, title: "My First Post"});
+  // em.persist(post);
+  // await em.flush();
 };
 
 main();
