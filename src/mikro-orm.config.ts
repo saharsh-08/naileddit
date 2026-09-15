@@ -19,4 +19,5 @@ export default {
     entities: [Post],
     user: 'postgres',
     password: 'postgres',
+    allowGlobalContext: true,
 } as Parameters<typeof MikroORM.init>[0];

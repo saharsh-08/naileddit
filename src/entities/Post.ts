@@ -11,11 +11,11 @@ export class Post {
 
   @Field(() => String)
   @Property({ type: "datetime", defaultRaw: "now()" })
-  createdAt: Date = new Date();
+  createdAt?: Date = new Date();
 
   @Field(() => String)
   @Property({ type: "datetime", onUpdate: () => new Date(), defaultRaw: "now()" })
-  updatedAt: Date = new Date();
+  updatedAt?: Date = new Date();
 
   @Field(() => String)
   @Property({ type: "text" })
