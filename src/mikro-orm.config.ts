@@ -5,6 +5,7 @@ import path from "path";
 
 import { __prod__ } from "./constants";
 import { Post } from "./entities/Post";
+import { Users } from "./entities/Users";
 
 export default {
   driver: PostgreSqlDriver,
@@ -16,7 +17,7 @@ export default {
   useTsNode: false,
   dbName: "naileddit",
   debug: !__prod__,
-  entities: [Post],
+  entities: [Post, Users],
   user: "postgres",
   password: "postgres",
   allowGlobalContext: true,
