@@ -1,0 +1,24 @@
+1. Difference between npm and yarn.
+- npm and yarn both install, update, lock, and run Node.js dependencies.
+
+--------------------------------------------------------------------------------
+Property                | NPM                            | Yarn                |
+--------------------------------------------------------------------------------
+Lock file               | package-lock.json              | yarn.lock           |
+Install dependencies    | npm install                    | yarn install        |
+Add dependency          | npm install <name>             | yarn add <name>     |
+Add dev dependency      | npm install <name> --same-dev  | yarn add -D <name>  |
+Remove dependency       | npm uninstall <name>           | yarn remove <name>  |
+--------------------------------------------------------------------------------
+
+- Yarn is preferred when you have multiple applications and shared packages in a monorepo.
+- NPM is preferred when the repository contains one service.
+
+2. What is MikroORM?
+- It is an Object Relational Mapper (ORM) for Node.js and TS
+- It lets you interact with the DB using TS classes and objects instead of writing raw SQL.
+- Using MikroORM offers following advantages:
+	1. Faster development
+	2. Easier relations
+	3. Transaction management
+	4. Migrations
