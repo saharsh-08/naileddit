@@ -1,0 +1,16 @@
+{
+  "folders": [
+    {
+      "name": "naileddit-server",
+      "path": "naileddit-server"
+    },
+    {
+      "name": "naileddit-web",
+      "path": "naileddit-web"
+    }
+  ],
+  "settings": {
+    // This tells VS Code to look inside each individual folder for its TS version
+    "js/ts.tsdk.path": "node_modules\\typescript\\lib",
+  }
+}
