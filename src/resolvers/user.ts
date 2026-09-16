@@ -7,6 +7,8 @@ import {
   Arg,
   Ctx,
   ObjectType,
+  Query,
+  Int,
 } from "type-graphql";
 import argon2 from "argon2";
 import { UniqueConstraintViolationException } from "@mikro-orm/core";
@@ -45,7 +47,7 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async register(
     @Arg("options", () => UsernamePasswordInput) options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext,
+    @Ctx() { em, req }: MyContext,
   ): Promise<UserResponse> {
     if (options.username.length <= 2) {
       return {
@@ -91,13 +93,16 @@ export class UserResolver {
       }
     }
 
+    // Store user id in session after successful registration
+    req.session.userId = user.id;
+
     return { user };
   }
 
   @Mutation(() => UserResponse)
   async login(
     @Arg("options", () => UsernamePasswordInput) options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext,
+    @Ctx() { em, req }: MyContext,
   ): Promise<UserResponse> {
     const user = await em.findOne(Users, { username: options.username });
     if (!user) {
@@ -123,6 +128,22 @@ export class UserResolver {
       };
     }
 
+    req.session.userId = user.id;
+
     return { user };
+  }
+
+  @Query(() => Users, { nullable: true })
+  async me(
+    @Arg("id", () => Int) id: number,
+    @Ctx() { req, em }: MyContext,
+  ): Promise<Users | null> {
+    // User is not logged in if session userId is not present
+    if (!req.session.userId) {
+      return null;
+    }
+
+    const user = await em.findOne(Users, { id });
+    return user;
   }
 }
