@@ -8,12 +8,12 @@ import {
   Ctx,
   ObjectType,
   Query,
-  Int,
 } from "type-graphql";
 import argon2 from "argon2";
 import { UniqueConstraintViolationException } from "@mikro-orm/core";
 import { Users } from "../entities/Users";
 import { MyContext } from "../types";
+import { COOKIE_NAME } from "../constants";
 // import { EntityManager } from "@mikro-orm/postgresql";
 
 @InputType()
@@ -135,7 +135,6 @@ export class UserResolver {
 
   @Query(() => Users, { nullable: true })
   async me(
-    @Arg("id", () => Int) id: number,
     @Ctx() { req, em }: MyContext,
   ): Promise<Users | null> {
     // User is not logged in if session userId is not present
@@ -143,7 +142,24 @@ export class UserResolver {
       return null;
     }
 
-    const user = await em.findOne(Users, { id });
+    const user = await em.findOne(Users, { id: req.session.userId });
     return user;
+  }
+
+  @Mutation(() => Boolean)
+  logout(
+    @Ctx() { req, res}: MyContext,
+  ): Promise<boolean> {
+    return new Promise((resolve) => {
+      req.session.destroy((err) => {
+        if (err) {
+          console.log("Error in destroying session: ", err);
+          resolve(false);
+          return;
+        }
+        res.clearCookie(COOKIE_NAME);
+        resolve(true);
+      });
+    });
   }
 }

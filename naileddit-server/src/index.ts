@@ -13,7 +13,7 @@ import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { MyContext } from "./types";
 import { UserResolver } from "./resolvers/user";
-import { __prod__ } from "./constants";
+import { __prod__, COOKIE_NAME } from "./constants";
 
 
 const main = async () => {
@@ -39,7 +39,7 @@ const main = async () => {
       credentials: true,
     }),
     session({
-      name: 'qid',
+      name: COOKIE_NAME,
       store: redisStore,
       secret: "keyboard cat",
       resave: false,
