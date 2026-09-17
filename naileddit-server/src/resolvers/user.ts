@@ -14,6 +14,7 @@ import argon2 from "argon2";
 import { UniqueConstraintViolationException } from "@mikro-orm/core";
 import { Users } from "../entities/Users";
 import { MyContext } from "../types";
+// import { EntityManager } from "@mikro-orm/postgresql";
 
 @InputType()
 class UsernamePasswordInput {
@@ -79,7 +80,6 @@ export class UserResolver {
       em.persist(user);
       await em.flush();
     } catch (error) {
-      // console.error(error);
       // Duplicate key error
       if (error instanceof UniqueConstraintViolationException) {
         return {
@@ -109,7 +109,7 @@ export class UserResolver {
       return {
         errors: [
           {
-            field: "username/password",
+            field: "username",
             message: "Incorrect username or password",
           },
         ],
@@ -121,7 +121,7 @@ export class UserResolver {
       return {
         errors: [
           {
-            field: "username/password",
+            field: "password",
             message: "Incorrect username or password",
           },
         ],

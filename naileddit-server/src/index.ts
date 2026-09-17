@@ -34,6 +34,10 @@ const main = async () => {
   });
 
   app.use(
+    cors({
+      origin: "http://localhost:3000",
+      credentials: true,
+    }),
     session({
       name: 'qid',
       store: redisStore,
@@ -60,7 +64,6 @@ const main = async () => {
 
   app.use(
     "/graphql",
-    cors(),
     express.json(),
     expressMiddleware(apolloServer, {
       context: async ({ req, res }): Promise<MyContext> => ({ em: orm.em, req, res }),
