@@ -3,30 +3,31 @@ import { useRouter } from "next/router";
 import { Form, Formik } from "formik";
 import { Wrapper } from "../components/Wrapper";
 import { InputField } from "../components/InputField";
-import { Box, Button } from "@chakra-ui/react";
-import { useRegisterMutation } from "../generated/graphql";
+import { Alert, AlertDescription, AlertDialogContent, AlertIcon, AlertTitle, Box, Button } from "@chakra-ui/react";
+import { useLoginMutation } from "../generated/graphql";
 import { toErrorMap } from "../utils/toErrorMap";
 
 // In Next.js, each file inside the pages directory automatically becomes a route.
 
-const Register: React.FC<{}> = ({}) => {
+const Login: React.FC<{}> = ({}) => {
   const router = useRouter();
-  const [, register] = useRegisterMutation();
+  const [, login] = useLoginMutation();
   return (
     <Wrapper variant="small">
       <Formik
         initialValues={{ username: "", password: "" }}
-        onSubmit={async (values, {setErrors}) => {
-          const response = await register({ username: values.username, password: values.password });
-          if (response.data?.register.errors) {
-            setErrors(toErrorMap(response.data.register.errors));
-          } else if (response.data.register.user) {
+        onSubmit={async (values, { setStatus }) => {
+          const response = await login({ username: values.username, password: values.password });
+          if (response.data?.login.errors) {
+            const errorMap = toErrorMap(response.data.login.errors);
+            setStatus(errorMap);
+          } else if (response.data.login.user) {
             router.push("/");
           }
         }}
       >
-        {({ isSubmitting }) => (
-          <Form>
+        {({ isSubmitting, status, setStatus }) => (
+          <Form onChange={() => status && setStatus(undefined)}>
             <InputField
               label="Username"
               name="username"
@@ -40,13 +41,21 @@ const Register: React.FC<{}> = ({}) => {
                 type="password"
               />
             </Box>
+            {status ? (
+              <Alert status="error" mt={4} borderRadius="md">
+                <AlertIcon />
+                <AlertDescription>
+                  {Object.keys(status).map(key => `${status[key]}`).join(", ")}
+                </AlertDescription>
+              </Alert>
+            ) : null}
             <Button
               mt={4}
               colorScheme="teal"
               type="submit"
               isLoading={isSubmitting}
             >
-              Register
+              Login
             </Button>
           </Form>
         )}
@@ -55,4 +64,4 @@ const Register: React.FC<{}> = ({}) => {
   );
 };
 
-export default Register;
+export default Login;
