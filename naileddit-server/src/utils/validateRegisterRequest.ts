@@ -24,6 +24,17 @@ export const validateRegisterRequest = (options: RegisterUserInput): UserRespons
     };
   }
 
+  if (username.includes('@')) {
+    return {
+      errors: [
+        {
+          field: "username",
+          message: "Username cannot include @ character",
+        },
+      ],
+    };
+  }
+
   if (password.length <= 2) {
     return {
       errors: [

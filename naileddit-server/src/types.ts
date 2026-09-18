@@ -28,10 +28,7 @@ export class RegisterUserInput {
 @InputType()
 export class LoginUserInput {
   @Field(() => String)
-  username?: string;
-
-  @Field(() => String, { nullable: true })
-  email?: string;
+  input!: string;
 
   @Field(() => String)
   password!: string;

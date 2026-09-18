@@ -62,27 +62,16 @@ export class UserResolver {
     @Arg("options", () => LoginUserInput) options: LoginUserInput,
     @Ctx() { em, req }: MyContext,
   ): Promise<UserResponse> {
-    if (!options.username && !options.email) {
-      return {
-        errors: [
-          {
-            field: "username/email",
-            message: "Either username or email must be provided",
-          },
-        ],
-      };
-    }
-
     const user = await em.findOne(
       Users,
-      options.username ? { username: options.username } : { email: options.email }
+      options.input.includes('@') ? { email: options.input } : { username: options.input }
     );
 
     if (!user) {
       return {
         errors: [
           {
-            field: "username",
+            field: "username/email/password",
             message: "Incorrect username, email, or password",
           },
         ],
@@ -94,7 +83,7 @@ export class UserResolver {
       return {
         errors: [
           {
-            field: "password",
+            field: "username/email/password",
             message: "Incorrect username or password",
           },
         ],
