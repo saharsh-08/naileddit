@@ -2,78 +2,36 @@ import "reflect-metadata";
 import {
   Resolver,
   Mutation,
-  InputType,
-  Field,
   Arg,
   Ctx,
-  ObjectType,
   Query,
 } from "type-graphql";
+import { RegisterUserInput, UserResponse, LoginUserInput } from "../types";
 import argon2 from "argon2";
 import { UniqueConstraintViolationException } from "@mikro-orm/core";
 import { Users } from "../entities/Users";
 import { MyContext } from "../types";
 import { COOKIE_NAME } from "../constants";
+import { validateRegisterRequest } from "../utils/validateRegisterRequest";
 // import { EntityManager } from "@mikro-orm/postgresql";
 
-@InputType()
-class UsernamePasswordInput {
-  @Field(() => String)
-  username!: string;
-
-  @Field(() => String)
-  password!: string;
-}
-
-@ObjectType()
-class FieldError {
-  @Field(() => String)
-  field!: string;
-
-  @Field(() => String)
-  message!: string;
-}
-
-@ObjectType()
-class UserResponse {
-  @Field(() => [FieldError], { nullable: true })
-  errors?: FieldError[];
-
-  @Field(() => Users, { nullable: true })
-  user?: Users;
-}
 
 @Resolver()
 export class UserResolver {
   @Mutation(() => UserResponse)
   async register(
-    @Arg("options", () => UsernamePasswordInput) options: UsernamePasswordInput,
+    @Arg("options", () => RegisterUserInput) options: RegisterUserInput,
     @Ctx() { em, req }: MyContext,
   ): Promise<UserResponse> {
-    if (options.username.length <= 2) {
-      return {
-        errors: [
-          {
-            field: "username",
-            message: "Length must be greater than 2",
-          },
-        ],
-      };
-    }
-    if (options.password.length <= 2) {
-      return {
-        errors: [
-          {
-            field: "password",
-            message: "Length must be greater than 2",
-          },
-        ],
-      };
+    const errors = validateRegisterRequest(options);
+    if (errors) {
+      return errors;
     }
 
     const hashedPassword = await argon2.hash(options.password);
     const user = em.create(Users, {
       username: options.username,
+      email: options.email,
       password: hashedPassword,
     });
     try {
@@ -101,16 +59,31 @@ export class UserResolver {
 
   @Mutation(() => UserResponse)
   async login(
-    @Arg("options", () => UsernamePasswordInput) options: UsernamePasswordInput,
+    @Arg("options", () => LoginUserInput) options: LoginUserInput,
     @Ctx() { em, req }: MyContext,
   ): Promise<UserResponse> {
-    const user = await em.findOne(Users, { username: options.username });
+    if (!options.username && !options.email) {
+      return {
+        errors: [
+          {
+            field: "username/email",
+            message: "Either username or email must be provided",
+          },
+        ],
+      };
+    }
+
+    const user = await em.findOne(
+      Users,
+      options.username ? { username: options.username } : { email: options.email }
+    );
+
     if (!user) {
       return {
         errors: [
           {
             field: "username",
-            message: "Incorrect username or password",
+            message: "Incorrect username, email, or password",
           },
         ],
       }
