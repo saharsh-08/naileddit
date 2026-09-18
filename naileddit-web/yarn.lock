@@ -1920,6 +1920,11 @@
     "@urql/core" "^6.0.2"
     wonka "^6.3.2"
 
+"@urql/next@2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@urql/next/-/next-2.0.1.tgz#a049044e0d779ad556ff45410625789ee3a40465"
+  integrity sha512-ddALO9UcmkFKtEbuXK7+34EBGSVy5iPRU9G5R/F/tusLdc7rtFzg9lZj7yRGhDprVBUddfIMLjwrIlgrx0/QTg==
+
 "@whatwg-node/disposablestack@^0.0.6":
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/@whatwg-node/disposablestack/-/disposablestack-0.0.6.tgz#2064a1425ea66194def6df0c7a1851b6939c82bb"
@@ -2896,7 +2901,7 @@ nanoid@^3.3.16:
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.19.tgz#336d4aa4bcd4fb24d2cddede7ffeae40bec03f0a"
   integrity sha512-Y2tUNy4ouw6tq5oDSKeQYGOyhkUBhNOcGV/02KC+6kd9eDGqdZd++mjMiIDilrBYvjEnCYvVtsuHCuP+okSfug==
 
-next@latest:
+next@16.3.5:
   version "16.3.5"
   resolved "https://registry.yarnpkg.com/next/-/next-16.3.5.tgz#4dd96eebb1d966d4d3946397442ccefc1322b479"
   integrity sha512-MdtsTgzyfCPRLC6uJ1mN8ao7lyJ4BB0U6Inhnx3gta1UcCIdHK3yxLG0E8OWQteWD8/Q0qb8A5o7wJaL8M9y2w==
