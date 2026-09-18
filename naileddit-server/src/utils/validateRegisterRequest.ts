@@ -2,6 +2,18 @@ import { RegisterUserInput, UserResponse } from "../types";
 
 export const validateRegisterRequest = (options: RegisterUserInput): UserResponse | null  => {
   const { username, email, password } = options;
+
+  if (!email) {
+    return {
+      errors: [
+        {
+          field: "email",
+          message: "Email is required",
+        }
+      ]
+    }
+  }
+
   if (!email.includes('@')) {
     return {
       errors: [
