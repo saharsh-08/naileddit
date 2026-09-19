@@ -3,7 +3,8 @@ import { useRouter } from "next/router";
 import { Form, Formik } from "formik";
 import { Wrapper } from "../components/Wrapper";
 import { InputField } from "../components/InputField";
-import { Alert, AlertDescription, AlertDialogContent, AlertIcon, AlertTitle, Box, Button } from "@chakra-ui/react";
+import NextLink from "next/link";
+import { Alert, AlertDescription, AlertIcon, Box, Button, Link, Flex } from "@chakra-ui/react";
 import { useLoginMutation } from "../generated/graphql";
 import { toErrorMap } from "../utils/toErrorMap";
 
@@ -54,6 +55,9 @@ const Login: React.FC<{}> = ({}) => {
                 </AlertDescription>
               </Alert>
             ) : null}
+            <Box mt={2} textAlign="right">
+              <Link as={NextLink} href="/forgot-password">Forgot Password</Link>
+            </Box>
             <Button
               mt={4}
               colorScheme="teal"
