@@ -8,13 +8,12 @@ import {
   Link,
 } from "@chakra-ui/react";
 import { useForgotPasswordMutation } from "../generated/graphql";
-import { useRouter } from "next/router";
 
 
 const ForgotPassword: React.FC<{}> = ({}) => {
   const [, forgotPassword] = useForgotPasswordMutation();
   const [status, setStatus] = useState(false);
-  const router = useRouter();
+
   return (
     <Wrapper variant="small">
       <Formik
@@ -24,33 +23,41 @@ const ForgotPassword: React.FC<{}> = ({}) => {
           setStatus(true);
         }}
       >
-        {({ isSubmitting, status, setStatus }) => (
-          <Form onChange={() => status && setStatus(undefined)}>
-            <InputField
-              label="Email"
-              name="email"
-              placeholder="Email"
-            />
-            <Button
-              mt={4}
-              mr={4}
-              colorScheme="teal"
-              type="button"
-            >
-              <Link as={NextLink} href="/login">
-                Go Back To Login
-              </Link>
-            </Button>
-            <Button
-              mt={4}
-              colorScheme="teal"
-              type="submit"
-              isLoading={isSubmitting}
-            >
-              Forgot Password
-            </Button>
-          </Form>
-        )}
+        {({ isSubmitting }) =>
+          status
+          ? (
+            <div>
+              If an account with that email exists, we sent you an email.
+            </div>
+          )
+          : (
+            <Form>
+              <InputField
+                label="Email"
+                name="email"
+                placeholder="Email"
+              />
+              <Button
+                mt={4}
+                mr={4}
+                colorScheme="teal"
+                type="button"
+              >
+                <Link as={NextLink} href="/login">
+                  Go Back To Login
+                </Link>
+              </Button>
+              <Button
+                mt={4}
+                colorScheme="teal"
+                type="submit"
+                isLoading={isSubmitting}
+              >
+                Forgot Password
+              </Button>
+            </Form>
+          )
+        }
       </Formik>
     </Wrapper>
   );
