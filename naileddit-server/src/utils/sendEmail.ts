@@ -40,7 +40,7 @@ export async function sendEmail(
       html
     });
 
-    console.log("Email sent successfully: ", response.data?.id);
+    if (response.data?.id) console.log("Email sent successfully: ", response.data?.id);
   } catch (error) {
     console.log("Error in sending email: ", error);
   }

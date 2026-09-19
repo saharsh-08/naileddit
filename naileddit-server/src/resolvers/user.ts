@@ -11,8 +11,10 @@ import argon2 from "argon2";
 import { UniqueConstraintViolationException } from "@mikro-orm/core";
 import { Users } from "../entities/Users";
 import { MyContext } from "../types";
-import { COOKIE_NAME } from "../constants";
+import { CHANGE_PASSWORD_PREFIX, COOKIE_NAME, } from "../constants";
 import { validateRegisterRequest } from "../utils/validateRegisterRequest";
+import { sendEmail } from "../utils/sendEmail";
+import { v7 as uuidv7 } from "uuid";
 // import { EntityManager } from "@mikro-orm/postgresql";
 
 
@@ -124,4 +126,87 @@ export class UserResolver {
       });
     });
   }
+
+  @Mutation(() => Boolean)
+  async forgotPassword(
+    @Arg("email", () => String) email: string,
+    @Ctx() { em, redis }: MyContext,
+  ): Promise<boolean> {
+    const user = await em.findOne(Users, { email });
+    if (!user) {
+      return true;
+    }
+
+    const token = uuidv7();
+    const mailContent = `<a href="http://localhost:3000/change-password/${token}">Click here to reset your password</a>`;
+
+    await redis.set(
+      CHANGE_PASSWORD_PREFIX + token,
+      user.id,
+      {
+        expiration:
+        { 
+          type: 'EX',
+          value: 60 * 60 * 24  // 1 day expiration
+        }
+      }
+    );
+
+    await sendEmail(email, "Reset Password", mailContent);
+
+    return true;
+  }
+
+  @Mutation(() => UserResponse)
+  async changePassword(
+    @Arg("newPassword", () => String) newPassword: string,
+    @Arg("token", () => String) token: string,
+    @Ctx() { em, req, redis }: MyContext,
+  ): Promise<UserResponse> {
+    if (newPassword.length <= 2) {
+      return {
+        errors: [
+          {
+            field: "password",
+            message: "Length must be greater than 2",
+          },
+        ],
+      };
+    }
+
+    const userId = await redis.get(CHANGE_PASSWORD_PREFIX + token);
+    if (!userId) {
+      return {
+        errors: [
+          {
+            field: "user/token",
+            message: "Invalid user or token",
+          },
+        ],
+      };
+    }
+
+    const user = await em.findOne(Users, { id: parseInt(userId) });
+    if (!user) {
+      return {
+        errors: [
+          {
+            field: "user/token",
+            message: "Invalid user or token",
+          },
+        ],
+      };
+    }
+
+    user.password = await argon2.hash(newPassword);
+    em.persist(user);
+    await em.flush();
+    await redis.del(CHANGE_PASSWORD_PREFIX + token);
+
+    // Login the user after changing the password
+    req.session.userId = user.id;
+
+    return { user };
+  }
+  
 }

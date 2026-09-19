@@ -2,6 +2,7 @@ import { EntityManager, Connection, IDatabaseDriver } from "@mikro-orm/core";
 import { Request, Response, } from "express";
 import { Field, InputType, ObjectType } from "type-graphql";
 import { Users } from "./entities/Users";
+import { RedisClientType } from "redis";
 
 export type MyContext = {
   em: EntityManager<IDatabaseDriver<Connection>>;
@@ -11,6 +12,7 @@ export type MyContext = {
     };
   };
   res: Response;
+  redis: RedisClientType<{}, {}, {}, 2, {}>;
 }
 
 @InputType()

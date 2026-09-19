@@ -1,3 +1,6 @@
+import dotenv from "dotenv"
+dotenv.config();
+
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
 import { MikroORM } from "@mikro-orm/core";
@@ -41,7 +44,7 @@ const main = async () => {
     session({
       name: COOKIE_NAME,
       store: redisStore,
-      secret: "keyboard cat",
+      secret: process.env.SESSION_ID_COOKIE_SECRET as string,
       resave: false,
       saveUninitialized: false,
       cookie: {
@@ -66,7 +69,14 @@ const main = async () => {
     "/graphql",
     express.json(),
     expressMiddleware(apolloServer, {
-      context: async ({ req, res }): Promise<MyContext> => ({ em: orm.em, req, res }),
+      context: async ({ req, res }): Promise<MyContext> => (
+        {
+          em: orm.em,
+          req,
+          res,
+          redis: redisClient
+        }
+      ),
     }),
   );
 
