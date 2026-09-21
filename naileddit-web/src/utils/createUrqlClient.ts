@@ -7,6 +7,20 @@ import {
   LogoutMutation,
 } from "../generated/graphql";
 import { cacheExchange } from "@urql/exchange-graphcache";
+import { Exchange } from "urql";
+import { pipe, tap } from "wonka";
+import Router from "next/router";
+
+const errorExchange: Exchange = ({ forward }) => (ops$) => {
+  return pipe(
+    forward(ops$),
+    tap(({ error }) => {
+      if (typeof window !== 'undefined' && error?.message.includes("User is not authenticated")) {
+        Router.replace("/login");
+      }
+    })
+  );
+};
 
 // cache.updateQuery lets you update what a query returns from the cache, without hitting the network.
 // The updated data is written into the graphcache's normalized store, ensuring consistency across the application.
@@ -50,6 +64,7 @@ export const createUrqlClient = () => {
           },
         },
       }),
+      errorExchange,
       fetchExchange,
     ],
     fetchOptions: {

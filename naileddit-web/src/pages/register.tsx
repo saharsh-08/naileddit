@@ -6,6 +6,7 @@ import { InputField } from "../components/InputField";
 import { Box, Button } from "@chakra-ui/react";
 import { useRegisterMutation } from "../generated/graphql";
 import { toErrorMap } from "../utils/toErrorMap";
+import NextLink from "next/link";
 
 // In Next.js, each file inside the pages directory automatically becomes a route.
 
@@ -54,6 +55,16 @@ const Register: React.FC<{}> = ({}) => {
                 type="password"
               />
             </Box>
+            <Button
+              as={NextLink}
+              colorScheme="teal"
+              type="button"
+              href="/"
+              mt={4}
+              mr={4}
+            >
+              Go To Home
+            </Button>
             <Button
               mt={4}
               colorScheme="teal"

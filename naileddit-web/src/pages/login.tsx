@@ -4,7 +4,7 @@ import { Form, Formik } from "formik";
 import { Wrapper } from "../components/Wrapper";
 import { InputField } from "../components/InputField";
 import NextLink from "next/link";
-import { Alert, AlertDescription, AlertIcon, Box, Button, Link, Flex } from "@chakra-ui/react";
+import { Alert, AlertDescription, AlertIcon, Box, Button, Link } from "@chakra-ui/react";
 import { useLoginMutation } from "../generated/graphql";
 import { toErrorMap } from "../utils/toErrorMap";
 
@@ -28,7 +28,11 @@ const Login: React.FC<{}> = ({}) => {
             const errorMap = toErrorMap(response.data.login.errors);
             setStatus(errorMap);
           } else if (response.data.login.user) {
-            router.push("/");
+            if (typeof router.query.next === 'string') {
+              router.push(router.query.next);
+            } else {
+              router.push("/");
+            }
           }
         }}
       >
@@ -58,6 +62,16 @@ const Login: React.FC<{}> = ({}) => {
             <Box mt={2} textAlign="right">
               <Link as={NextLink} href="/forgot-password">Forgot Password</Link>
             </Box>
+            <Button
+              as={NextLink}
+              colorScheme="teal"
+              type="button"
+              href="/"
+              mt={4}
+              mr={4}
+            >
+              Go To Home
+            </Button>
             <Button
               mt={4}
               colorScheme="teal"
