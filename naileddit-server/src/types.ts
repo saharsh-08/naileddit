@@ -1,11 +1,9 @@
-import { EntityManager, Connection, IDatabaseDriver } from "@mikro-orm/core";
 import { Request, Response, } from "express";
 import { Field, InputType, ObjectType } from "type-graphql";
 import { Users } from "./entities/Users";
 import { RedisClientType } from "redis";
 
 export type MyContext = {
-  em: EntityManager<IDatabaseDriver<Connection>>;
   req: Request & {
     session?: {
       userId?: number;
@@ -15,6 +13,7 @@ export type MyContext = {
   redis: RedisClientType<{}, {}, {}, 2, {}>;
 }
 
+// Input for Registration
 @InputType()
 export class RegisterUserInput {
   @Field(() => String)
@@ -27,6 +26,7 @@ export class RegisterUserInput {
   password!: string;
 }
 
+// Input for Login
 @InputType()
 export class LoginUserInput {
   @Field(() => String)
@@ -34,6 +34,16 @@ export class LoginUserInput {
 
   @Field(() => String)
   password!: string;
+}
+
+// Input for creating a Post
+@InputType()
+export class CreatePostInput {
+  @Field(() => String)
+  title!: string;
+
+  @Field(() => String)
+  text!: string;
 }
 
 @ObjectType()

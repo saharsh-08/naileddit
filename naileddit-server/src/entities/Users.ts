@@ -1,33 +1,33 @@
-import { Entity, PrimaryKey, Property } from "@mikro-orm/decorators/legacy";
 import { ObjectType, Field, Int } from "type-graphql";
+import { CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn, Column, BaseEntity, OneToMany } from "typeorm";
+import { Post } from "./Post";
 
 @ObjectType()
 @Entity()
-export class Users {
+export class Users extends BaseEntity {
   @Field(() => Int)
-  @PrimaryKey({ type: "number" })
+  @PrimaryGeneratedColumn({ type: "int" })
   id!: number;
 
   @Field(() => String)
-  @Property({ type: "datetime", defaultRaw: "now()" })
-  createdAt?: Date = new Date();
-
-  @Field(() => String)
-  @Property({
-    type: "datetime",
-    onUpdate: () => new Date(),
-    defaultRaw: "now()",
-  })
-  updatedAt?: Date = new Date();
-
-  @Field(() => String)
-  @Property({ type: "text", unique: true })
+  @Column({ type: "text", unique: true })
   username!: string;
 
   @Field(() => String)
-  @Property({ type: "text", unique: true })
+  @Column({ type: "text", unique: true })
   email!: string;
 
-  @Property({ type: "text" })
+  @Column({ type: "text" })
   password!: string;
+
+  @OneToMany(() => Post, post => post.creator)
+  posts!: Post[];
+
+  @Field(() => String)
+  @CreateDateColumn()
+  createdAt?: Date;
+
+  @Field(() => String)
+  @UpdateDateColumn()
+  updatedAt?: Date; 
 }
