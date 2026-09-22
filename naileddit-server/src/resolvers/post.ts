@@ -1,6 +1,6 @@
 import "reflect-metadata";
-import { Resolver, Query, Arg, Int, Mutation, Ctx, UseMiddleware } from "type-graphql";
-import { MyContext } from "../types";
+import { Resolver, Query, Arg, Int, Mutation, Ctx, UseMiddleware, FieldResolver, Root } from "type-graphql";
+import { MyContext, PostsResponse } from "../types";
 import { isAuth } from "../middleware/isAuth";
 
 import { Post } from "../entities/Post";
@@ -10,26 +10,52 @@ import { appDataSource } from "../typeorm.config";
 // @Query(): Fetching data
 // @Mutation(): Modifying data (create, update, delete)
 
-@Resolver()
+@Resolver(Post)
 export class PostResolver {
-  @Query(() => [Post])
-  posts(
+  @FieldResolver(() => String)
+  textSnippet(
+    @Root() root: Post
+  ) {
+    return root.text.slice(0, 50);
+  }
+
+  @Query(() => PostsResponse)
+  async posts(
     @Arg("limit", () => Int) limit: number,
     @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
-  ): Promise<Post[]> {
+  ): Promise<PostsResponse> {
     const realLimit = Math.min(50, limit);
-    const qb = appDataSource
-      .getRepository(Post)
-      .createQueryBuilder("p")
-      .orderBy('"createdAt"', "DESC")
-      .take(realLimit)
-    ;
+    const realLimitPlusOne = realLimit + 1; 
 
+    const replacements: any[] = [realLimitPlusOne];
     if (cursor) {
-      qb.where('"createdAt" < :cursor', { cursor: new Date(parseInt(cursor))});
+      replacements.push(new Date(parseInt(cursor)));
     }
 
-    return qb.getMany();
+    const posts = await appDataSource.query(
+      `
+        SELECT p.*,
+        json_build_object(
+          'id', u.id,
+          'username', u.username,
+          'email', u.email,
+          'createdAt', u."createdAt"
+          'updatedAt', u."updatedAt"
+        ) creator
+        FROM post p
+        INNER JOIN public.users u
+        ON u.id = p."creatorId"
+        ${cursor ? 'WHERE p."createdAt" < $2' : ''}
+        ORDER BY p."createdAt" DESC
+        LIMIT $1
+      `,
+      replacements
+    );
+
+    return {
+      posts: posts.slice(0, realLimit),
+      hasMore: posts.length === realLimitPlusOne,
+    };
   }
 
   @Query(() => Post, { nullable: true })

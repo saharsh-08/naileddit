@@ -21,8 +21,6 @@ import { __prod__, COOKIE_NAME } from "./constants";
 
 const main = async () => {
   await appDataSource.initialize();
-  // Running migrations to create the post table in the database
-  // await appDataSource.runMigrations();
 
   const app = express();
 

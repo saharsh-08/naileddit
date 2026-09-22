@@ -2,6 +2,7 @@ import { Request, Response, } from "express";
 import { Field, InputType, ObjectType } from "type-graphql";
 import { Users } from "./entities/Users";
 import { RedisClientType } from "redis";
+import { Post } from "./entities/Post";
 
 export type MyContext = {
   req: Request & {
@@ -62,4 +63,13 @@ export class UserResponse {
 
   @Field(() => Users, { nullable: true })
   user?: Users;
+}
+
+@ObjectType()
+export class PostsResponse {
+  @Field(() => [Post])
+  posts!: Post[];
+
+  @Field(() => Boolean)
+  hasMore!: boolean;
 }
