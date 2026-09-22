@@ -8,6 +8,8 @@ export const appDataSource = new DataSource({
 
   // Migration options
   synchronize: true,
+  migrations: [__dirname + "\\migrations\\**\\*{.js,.ts}"],
+  migrationsRun: false,
 
   // Database connection options
   database: "naileddit",

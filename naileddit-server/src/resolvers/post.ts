@@ -5,6 +5,7 @@ import { isAuth } from "../middleware/isAuth";
 
 import { Post } from "../entities/Post";
 import { CreatePostInput } from "../types";
+import { appDataSource } from "../typeorm.config";
 
 // @Query(): Fetching data
 // @Mutation(): Modifying data (create, update, delete)
@@ -12,8 +13,23 @@ import { CreatePostInput } from "../types";
 @Resolver()
 export class PostResolver {
   @Query(() => [Post])
-  posts(): Promise<Post[]> {
-    return Post.find();
+  posts(
+    @Arg("limit", () => Int) limit: number,
+    @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+  ): Promise<Post[]> {
+    const realLimit = Math.min(50, limit);
+    const qb = appDataSource
+      .getRepository(Post)
+      .createQueryBuilder("p")
+      .orderBy('"createdAt"', "DESC")
+      .take(realLimit)
+    ;
+
+    if (cursor) {
+      qb.where('"createdAt" < :cursor', { cursor: new Date(parseInt(cursor))});
+    }
+
+    return qb.getMany();
   }
 
   @Query(() => Post, { nullable: true })
@@ -29,12 +45,10 @@ export class PostResolver {
     @Arg("options", () => CreatePostInput) options: CreatePostInput,
     @Ctx() { req }: MyContext
   ): Promise<Post> {
-    const post = Post.create({
+    return Post.create({
       ...options,
       creatorId: req.session?.userId,
-    });
-    await post.save();
-    return post;
+    }).save();
   }
 
   @Mutation(() => Post, { nullable: true })

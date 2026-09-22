@@ -9,7 +9,6 @@ import {
 import { QueryFailedError } from "typeorm";
 import { RegisterUserInput, UserResponse, LoginUserInput } from "../types";
 import argon2 from "argon2";
-import { appDataSource } from "../typeorm.config";
 import { Users } from "../entities/Users";
 import { MyContext } from "../types";
 import { CHANGE_PASSWORD_PREFIX, COOKIE_NAME, } from "../constants";
@@ -31,21 +30,14 @@ export class UserResolver {
     }
 
     const hashedPassword = await argon2.hash(options.password);
-    let user;
+    const user = Users.create({
+      username: options.username,
+      email: options.email,
+      password: hashedPassword,
+    });
     
     try {
-      const result = await appDataSource.manager
-        .createQueryBuilder()
-        .insert()
-        .into(Users)
-        .values({
-          username: options.username,
-          email: options.email,
-          password: hashedPassword,
-        })
-        .returning("*")
-        .execute();
-      user = result.raw[0];
+      await user.save();
     } catch (error) {
       // Duplicate key error
       if (error instanceof QueryFailedError && (error as any).code === "23505") { // Unique violation error code for PostgreSQL
