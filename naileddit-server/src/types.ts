@@ -1,6 +1,6 @@
 import { Request, Response, } from "express";
 import { Field, InputType, ObjectType } from "type-graphql";
-import { Users } from "./entities/Users";
+import { User } from "./entities/User";
 import { RedisClientType } from "redis";
 import { Post } from "./entities/Post";
 
@@ -61,8 +61,8 @@ export class UserResponse {
   @Field(() => [FieldError], { nullable: true })
   errors?: FieldError[];
 
-  @Field(() => Users, { nullable: true })
-  user?: Users;
+  @Field(() => User, { nullable: true })
+  user?: User;
 }
 
 @ObjectType()

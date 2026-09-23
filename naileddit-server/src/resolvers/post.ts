@@ -39,11 +39,11 @@ export class PostResolver {
           'id', u.id,
           'username', u.username,
           'email', u.email,
-          'createdAt', u."createdAt"
+          'createdAt', u."createdAt",
           'updatedAt', u."updatedAt"
-        ) creator
+        ) AS creator
         FROM post p
-        INNER JOIN public.users u
+        INNER JOIN public.user u
         ON u.id = p."creatorId"
         ${cursor ? 'WHERE p."createdAt" < $2' : ''}
         ORDER BY p."createdAt" DESC
@@ -100,6 +100,33 @@ export class PostResolver {
     @Arg("id", () => Int) id: number,
   ): Promise<boolean> {
     await Post.delete({ id });
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
+  async vote(
+    @Arg("postId", () => Int) postId: number,
+    @Arg("value", () => Int) value: number,
+    @Ctx() { req }: MyContext,
+  ) {
+    const { userId } = req.session;
+    const isUpdoot = value !== -1;
+    const realValue = isUpdoot ? 1 : -1;
+
+    await appDataSource.query(`
+      START TRANSACTION;
+
+      INSERT INTO updoot("userId", "postId", "value")
+      VALUES (${userId}, ${postId}, ${realValue});
+
+      UPDATE post
+      SET points = points + ${realValue}
+      WHERE id = ${postId};
+
+      COMMIT;
+    `);
+
     return true;
   }
 }

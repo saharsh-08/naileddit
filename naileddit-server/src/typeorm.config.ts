@@ -1,6 +1,7 @@
 import { __prod__ } from "./constants";
 import { Post } from "./entities/Post";
-import { Users } from "./entities/Users";
+import { User } from "./entities/User";
+import { Updoot } from "./entities/Updoot";
 import { DataSource } from "typeorm";
 
 export const appDataSource = new DataSource({
@@ -13,7 +14,7 @@ export const appDataSource = new DataSource({
 
   // Database connection options
   database: "naileddit",
-  entities: [Post, Users],
+  entities: [Post, User, Updoot],
   username: "postgres",
   password: "postgres",
 

@@ -5,11 +5,13 @@ import {
   Arg,
   Ctx,
   Query,
+  FieldResolver,
+  Root,
 } from "type-graphql";
 import { QueryFailedError } from "typeorm";
 import { RegisterUserInput, UserResponse, LoginUserInput } from "../types";
 import argon2 from "argon2";
-import { Users } from "../entities/Users";
+import { User } from "../entities/User";
 import { MyContext } from "../types";
 import { CHANGE_PASSWORD_PREFIX, COOKIE_NAME, } from "../constants";
 import { validateRegisterRequest } from "../utils/validateRegisterRequest";
@@ -17,8 +19,20 @@ import { sendEmail } from "../utils/sendEmail";
 import { v7 as uuidv7 } from "uuid";
 
 
-@Resolver()
+@Resolver(User)
 export class UserResolver {
+  @FieldResolver(() => String)
+  email(
+    @Root() user: User,
+    @Ctx() { req }: MyContext,
+  ): string {
+    // Only return the email if the current user is the owner of the email
+    if (req.session?.userId === user.id) {
+      return user.email;
+    }
+    return "";
+  }
+
   @Mutation(() => UserResponse)
   async register(
     @Arg("options", () => RegisterUserInput) options: RegisterUserInput,
@@ -30,7 +44,7 @@ export class UserResolver {
     }
 
     const hashedPassword = await argon2.hash(options.password);
-    const user = Users.create({
+    const user = User.create({
       username: options.username,
       email: options.email,
       password: hashedPassword,
@@ -63,7 +77,7 @@ export class UserResolver {
     @Arg("options", () => LoginUserInput) options: LoginUserInput,
     @Ctx() { req }: MyContext,
   ): Promise<UserResponse> {
-    const user = await Users.findOne({
+    const user = await User.findOne({
       where: options.input.includes('@') ? { email: options.input } : { username: options.input }
     });
 
@@ -95,16 +109,16 @@ export class UserResolver {
     return { user };
   }
 
-  @Query(() => Users, { nullable: true })
+  @Query(() => User, { nullable: true })
   async me(
     @Ctx() { req }: MyContext,
-  ): Promise<Users | null> {
+  ): Promise<User | null> {
     // User is not logged in if session userId is not present
     if (!req.session.userId) {
       return null;
     }
 
-    const user = await Users.findOne({ where: { id: req.session.userId } });
+    const user = await User.findOne({ where: { id: req.session.userId } });
     return user;
   }
 
@@ -130,7 +144,7 @@ export class UserResolver {
     @Arg("email", () => String) email: string,
     @Ctx() { redis }: MyContext,
   ): Promise<boolean> {
-    const user = await Users.findOne({ where: { email } });
+    const user = await User.findOne({ where: { email } });
     if (!user) {
       return true;
     }
@@ -185,7 +199,7 @@ export class UserResolver {
     }
 
     const userIdNum = parseInt(userId);
-    const user = await Users.findOne({ where: { id: userIdNum } });
+    const user = await User.findOne({ where: { id: userIdNum } });
     if (!user) {
       return {
         errors: [
@@ -197,7 +211,7 @@ export class UserResolver {
       };
     }
 
-    await Users.update(
+    await User.update(
       { id: userIdNum },
       { password: await argon2.hash(newPassword) }
     );
