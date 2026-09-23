@@ -43,6 +43,7 @@ export type Mutation = {
   logout: Scalars['Boolean']['output'];
   register: UserResponse;
   updatePost?: Maybe<Post>;
+  vote: Scalars['Boolean']['output'];
 };
 
 
@@ -82,23 +83,39 @@ export type MutationUpdatePostArgs = {
   title: Scalars['String']['input'];
 };
 
+
+export type MutationVoteArgs = {
+  postId: Scalars['Int']['input'];
+  value: Scalars['Int']['input'];
+};
+
 export type Post = {
   __typename?: 'Post';
   createdAt: Scalars['String']['output'];
+  creator: User;
   creatorId: Scalars['Int']['output'];
   id: Scalars['Int']['output'];
   points: Scalars['Int']['output'];
   text: Scalars['String']['output'];
+  textSnippet: Scalars['String']['output'];
   title: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
+  updoots: Array<Updoot>;
+  voteStatus?: Maybe<Scalars['Int']['output']>;
+};
+
+export type PostsResponse = {
+  __typename?: 'PostsResponse';
+  hasMore: Scalars['Boolean']['output'];
+  posts: Array<Post>;
 };
 
 export type Query = {
   __typename?: 'Query';
   hello: Scalars['String']['output'];
-  me?: Maybe<Users>;
+  me?: Maybe<User>;
   post?: Maybe<Post>;
-  posts: Array<Post>;
+  posts: PostsResponse;
 };
 
 
@@ -118,14 +135,17 @@ export type RegisterUserInput = {
   username: Scalars['String']['input'];
 };
 
-export type UserResponse = {
-  __typename?: 'UserResponse';
-  errors?: Maybe<Array<FieldError>>;
-  user?: Maybe<Users>;
+export type Updoot = {
+  __typename?: 'Updoot';
+  post: Post;
+  postId: Scalars['Int']['output'];
+  user: User;
+  userId: Scalars['Int']['output'];
+  value: Scalars['Int']['output'];
 };
 
-export type Users = {
-  __typename?: 'Users';
+export type User = {
+  __typename?: 'User';
   createdAt: Scalars['String']['output'];
   email: Scalars['String']['output'];
   id: Scalars['Int']['output'];
@@ -133,11 +153,19 @@ export type Users = {
   username: Scalars['String']['output'];
 };
 
+export type UserResponse = {
+  __typename?: 'UserResponse';
+  errors?: Maybe<Array<FieldError>>;
+  user?: Maybe<User>;
+};
+
+export type PostSnippetFragment = { __typename?: 'Post', id: number, title: string, textSnippet: string, creatorId: number, voteStatus?: number | null, points: number, createdAt: string, updatedAt: string, creator: { __typename?: 'User', id: number, username: string } };
+
 export type RegularErrorFragment = { __typename?: 'FieldError', field: string, message: string };
 
-export type RegularUserFragment = { __typename?: 'Users', id: number, username: string, email: string };
+export type RegularUserFragment = { __typename?: 'User', id: number, username: string, email: string };
 
-export type RegularUserResponseFragment = { __typename?: 'UserResponse', user?: { __typename?: 'Users', id: number, username: string, email: string } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null };
+export type RegularUserResponseFragment = { __typename?: 'UserResponse', user?: { __typename?: 'User', id: number, username: string, email: string } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null };
 
 export type ChangePasswordMutationVariables = Exact<{
   token: Scalars['String']['input'];
@@ -145,7 +173,7 @@ export type ChangePasswordMutationVariables = Exact<{
 }>;
 
 
-export type ChangePasswordMutation = { __typename?: 'Mutation', changePassword: { __typename?: 'UserResponse', user?: { __typename?: 'Users', id: number, username: string, email: string } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+export type ChangePasswordMutation = { __typename?: 'Mutation', changePassword: { __typename?: 'UserResponse', user?: { __typename?: 'User', id: number, username: string, email: string } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
 export type CreatePostMutationVariables = Exact<{
   options: CreatePostInput;
@@ -167,7 +195,7 @@ export type LoginMutationVariables = Exact<{
 }>;
 
 
-export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'UserResponse', user?: { __typename?: 'Users', id: number, username: string, email: string } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'UserResponse', user?: { __typename?: 'User', id: number, username: string, email: string } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
 export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
 
@@ -181,12 +209,20 @@ export type RegisterMutationVariables = Exact<{
 }>;
 
 
-export type RegisterMutation = { __typename?: 'Mutation', register: { __typename?: 'UserResponse', user?: { __typename?: 'Users', id: number, username: string, email: string } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+export type RegisterMutation = { __typename?: 'Mutation', register: { __typename?: 'UserResponse', user?: { __typename?: 'User', id: number, username: string, email: string } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+
+export type VoteMutationVariables = Exact<{
+  value: Scalars['Int']['input'];
+  postId: Scalars['Int']['input'];
+}>;
+
+
+export type VoteMutation = { __typename?: 'Mutation', vote: boolean };
 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me?: { __typename?: 'Users', id: number, username: string, email: string } | null };
+export type MeQuery = { __typename?: 'Query', me?: { __typename?: 'User', id: number, username: string, email: string } | null };
 
 export type PostsQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
@@ -194,10 +230,26 @@ export type PostsQueryVariables = Exact<{
 }>;
 
 
-export type PostsQuery = { __typename?: 'Query', posts: Array<{ __typename?: 'Post', id: number, title: string, text: string, creatorId: number, createdAt: string, updatedAt: string }> };
+export type PostsQuery = { __typename?: 'Query', posts: { __typename?: 'PostsResponse', hasMore: boolean, posts: Array<{ __typename?: 'Post', id: number, title: string, textSnippet: string, creatorId: number, voteStatus?: number | null, points: number, createdAt: string, updatedAt: string, creator: { __typename?: 'User', id: number, username: string } }> } };
 
+export const PostSnippetFragmentDoc = gql`
+    fragment PostSnippet on Post {
+  id
+  title
+  textSnippet
+  creatorId
+  creator {
+    id
+    username
+  }
+  voteStatus
+  points
+  createdAt
+  updatedAt
+}
+    `;
 export const RegularUserFragmentDoc = gql`
-    fragment RegularUser on Users {
+    fragment RegularUser on User {
   id
   username
   email
@@ -286,6 +338,15 @@ export const RegisterDocument = gql`
 export function useRegisterMutation() {
   return Urql.useMutation<RegisterMutation, RegisterMutationVariables>(RegisterDocument);
 };
+export const VoteDocument = gql`
+    mutation Vote($value: Int!, $postId: Int!) {
+  vote(value: $value, postId: $postId)
+}
+    `;
+
+export function useVoteMutation() {
+  return Urql.useMutation<VoteMutation, VoteMutationVariables>(VoteDocument);
+};
 export const MeDocument = gql`
     query Me {
   me {
@@ -300,15 +361,13 @@ export function useMeQuery(options?: Omit<Urql.UseQueryArgs<MeQueryVariables>, '
 export const PostsDocument = gql`
     query Posts($limit: Int!, $cursor: String) {
   posts(limit: $limit, cursor: $cursor) {
-    id
-    title
-    text
-    creatorId
-    createdAt
-    updatedAt
+    posts {
+      ...PostSnippet
+    }
+    hasMore
   }
 }
-    `;
+    ${PostSnippetFragmentDoc}`;
 
 export function usePostsQuery(options: Omit<Urql.UseQueryArgs<PostsQueryVariables>, 'query'>) {
   return Urql.useQuery<PostsQuery, PostsQueryVariables>({ query: PostsDocument, ...options });

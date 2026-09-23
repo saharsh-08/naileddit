@@ -26,16 +26,16 @@ const NavBar: React.FC<NavBarProps> = ({}) => {
   // If user is logged in
   else {
     body = (
-      <Flex>
-        <Box mr={2}>{data.me.username}</Box>
-        <Button
-          variant="link"
+      <Flex align="center">
+        <Box mr={4} fontSize="large">{data.me.username}</Box>
+        <Box
+          as={Button}
           // Pass the additionalTypenames context to ensure the cache is updated correctly after logout
           onClick={() => logout({})}
           isLoading={logoutFetching}
         >
           Logout
-        </Button>
+        </Box>
       </Flex>
     );
   }
