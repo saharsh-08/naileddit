@@ -6,6 +6,7 @@ import { isAuth } from "../middleware/isAuth";
 import { Post } from "../entities/Post";
 import { CreatePostInput } from "../types";
 import { appDataSource } from "../typeorm.config";
+import { Updoot } from "../entities/Updoot";
 
 // @Query(): Fetching data
 // @Mutation(): Modifying data (create, update, delete)
@@ -17,6 +18,22 @@ export class PostResolver {
     @Root() root: Post
   ) {
     return root.text.slice(0, 50);
+  }
+
+  @FieldResolver(() => Int, { nullable: true })
+  async voteStatus(
+    @Root() root: Post,
+    @Ctx() { req }: MyContext,
+  ) {
+    if (!req.session.userId) {
+      return null;
+    }
+
+    const updoot = await Updoot.findOne({
+      where: { userId: req.session.userId, postId: root.id }
+    });
+
+    return updoot ? updoot.value : null;
   }
 
   @Query(() => PostsResponse)
@@ -114,18 +131,51 @@ export class PostResolver {
     const isUpdoot = value !== -1;
     const realValue = isUpdoot ? 1 : -1;
 
-    await appDataSource.query(`
-      START TRANSACTION;
+    const updoot = await Updoot.findOne({ where: { userId, postId } });
 
-      INSERT INTO updoot("userId", "postId", "value")
-      VALUES (${userId}, ${postId}, ${realValue});
-
-      UPDATE post
-      SET points = points + ${realValue}
-      WHERE id = ${postId};
-
-      COMMIT;
-    `);
+    // If the user has already updooted and wants to change their vote
+    if (updoot && updoot.value !== realValue) {
+      await appDataSource.transaction(async tm => {
+        await tm.query(`
+          UPDATE updoot
+          SET value = $1
+          WHERE "userId" = $2 AND "postId" = $3;
+        `, [realValue, userId, postId]);
+        await tm.query(`
+          UPDATE post
+          SET points = points + $1
+          WHERE id = $2;
+        `, [realValue * 2, postId]);
+      });
+    }
+    // If the user is voting again and wants to unvote
+    else if (updoot && updoot.value === realValue) {
+      await appDataSource.transaction(async tm => {
+        await tm.query(`
+          DELETE FROM updoot
+          WHERE "userId" = $1 AND "postId" = $2;
+        `, [userId, postId]);
+        await tm.query(`
+          UPDATE post
+          SET points = points - $1
+          WHERE id = $2;
+        `, [realValue, postId]);
+      });
+    }
+    // If the user is voting for the first time
+    else if (!updoot) {
+      await appDataSource.transaction(async tm => {
+        await tm.query(`
+          INSERT INTO updoot("userId", "postId", "value")
+          VALUES ($1, $2, $3);
+        `, [userId, postId, realValue]);
+        await tm.query(`
+          UPDATE post
+          SET points = points + $1
+          WHERE id = $2;
+        `, [realValue, postId]);
+      });
+    }
 
     return true;
   }
