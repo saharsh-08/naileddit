@@ -9,6 +9,8 @@ import {
   VoteMutation,
   PostSnippetFragment,
   VoteMutationVariables,
+  DeletePostMutation,
+  MutationDeletePostArgs,
 } from "../generated/graphql";
 import { Cache, cacheExchange, Resolver } from "@urql/exchange-graphcache";
 import { Exchange } from "urql";
@@ -121,12 +123,12 @@ export const createUrqlClient = () => {
                 }
               });
             },
-            logout: (_result: LogoutMutation, args, cache, info) => {
-              invalidatePosts(cache);
-              cache.updateQuery<MeQuery>({ query: MeDocument }, () => {
-                return { me: null };
-              });
-            },
+            // logout: (_result: LogoutMutation, args, cache, info) => {
+            //   invalidatePosts(cache);
+            //   cache.updateQuery<MeQuery>({ query: MeDocument }, () => {
+            //     return { me: null };
+            //   });
+            // },
             createPost: (_result: CreatePostMutation, args, cache, info) => {
               // Invalidate the posts query to refetch the posts after creating a new post
               invalidatePosts(cache);
@@ -147,8 +149,6 @@ export const createUrqlClient = () => {
                 { id: postId }
               ) as PostSnippetFragment;
 
-              console.log("Data: ", data);
-
               if (data) {
                 const newPoints = data.voteStatus === realValue
                   ? data.points - data.voteStatus
@@ -167,6 +167,10 @@ export const createUrqlClient = () => {
                   { id: postId, points: newPoints, voteStatus: newVoteStatus }
                 );
               }
+            },
+            deletePost: (_result: DeletePostMutation, args, cache, info) => {
+              const { id } = args as MutationDeletePostArgs;
+              cache.invalidate(`Post:${id}`);
             }
           },
         },

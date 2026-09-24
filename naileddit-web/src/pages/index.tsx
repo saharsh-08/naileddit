@@ -1,10 +1,10 @@
 import Layout from "../components/Layout";
-import { usePostsQuery } from "../generated/graphql";
-import { Box, Button, Flex, Heading, Icon, IconButton, Link, Stack, Text, textDecoration } from "@chakra-ui/react";
+import { useMeQuery, usePostsQuery } from "../generated/graphql";
+import { Box, Button, Flex, Heading, Link, Stack, Text } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useState } from "react";
-import { ChevronUpIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import UpdootSection from "../components/UpdootSection";
+import UpdateDeleteButtons from "../components/UpdateDeleteButtons";
 
 const Index = () => {
   const [variables, setVariables] = useState({
@@ -24,16 +24,17 @@ const Index = () => {
             : (
               <Stack spacing={8}>
                 {
-                  data.posts.posts.map(p => (
+                  data.posts.posts.map(p => !p ? null : (
                     <Flex key={p.id} p={5} borderWidth="1px">
                       <UpdootSection post={p}/>
-                      <Box>
-                        <Link as={NextLink} href={`/post/${p.id}`} style={{ textDecoration: "none" }}>
+                      <Box flex={1}>
+                        <Link as={NextLink} href={`/post/${p.id}`} display="inline-block" style={{ textDecoration: "none" }}>
                           <Heading fontSize="xl">{p.title}</Heading>
                         </Link>
                         <Text fontSize="small">Posted by: {p.creator.username}</Text>
                         <Text mt={4}>{p.textSnippet}</Text>
-                      </Box> 
+                      </Box>
+                        <UpdateDeleteButtons id={p.id} creatorId={p.creatorId} />
                     </Flex>
                   ))
                 }

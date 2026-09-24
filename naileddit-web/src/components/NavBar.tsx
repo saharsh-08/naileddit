@@ -1,11 +1,13 @@
 import { Box, Flex, Link, Button, Heading } from "@chakra-ui/react";
 import NextLink from "next/link";
+import { useRouter } from "next/router";
 import React from "react";
 import { useLogoutMutation, useMeQuery } from "../generated/graphql";
 
 interface NavBarProps {}
 
 const NavBar: React.FC<NavBarProps> = ({}) => {
+  const router = useRouter();
   const [{ data, fetching }] = useMeQuery();
   const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
   let body = null;
@@ -30,7 +32,10 @@ const NavBar: React.FC<NavBarProps> = ({}) => {
         <Box mr={4} fontSize="large">{data.me.username}</Box>
         <Button
           // Pass the additionalTypenames context to ensure the cache is updated correctly after logout
-          onClick={() => logout({})}
+          onClick={async () => {
+            await logout({});
+            router.reload();
+          }}
           isLoading={logoutFetching}
           fill="white"
         >
