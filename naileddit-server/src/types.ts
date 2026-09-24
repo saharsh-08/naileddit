@@ -1,8 +1,10 @@
 import { Request, Response, } from "express";
+import { createUpdootLoader } from "./utils/createUpdootLoader";
 import { Field, InputType, ObjectType } from "type-graphql";
 import { User } from "./entities/User";
 import { RedisClientType } from "redis";
 import { Post } from "./entities/Post";
+import DataLoader from "dataloader";
 
 export type MyContext = {
   req: Request & {
@@ -12,6 +14,8 @@ export type MyContext = {
   };
   res: Response;
   redis: RedisClientType<{}, {}, {}, 2, {}>;
+  userLoader: DataLoader<number, User, number>;
+  updootLoader: typeof createUpdootLoader;
 }
 
 // Input for Registration

@@ -7,6 +7,7 @@ import { Post } from "../entities/Post";
 import { CreatePostInput } from "../types";
 import { appDataSource } from "../typeorm.config";
 import { Updoot } from "../entities/Updoot";
+import { User } from "../entities/User";
 
 // @Query(): Fetching data
 // @Mutation(): Modifying data (create, update, delete)
@@ -23,17 +24,23 @@ export class PostResolver {
   @FieldResolver(() => Int, { nullable: true })
   async voteStatus(
     @Root() root: Post,
-    @Ctx() { req }: MyContext,
+    @Ctx() { req, updootLoader }: MyContext,
   ) {
     if (!req.session.userId) {
       return null;
     }
 
-    const updoot = await Updoot.findOne({
-      where: { userId: req.session.userId, postId: root.id }
-    });
+    const updoot = await updootLoader.load({ userId: req.session.userId, postId: root.id });
 
     return updoot ? updoot.value : null;
+  }
+
+  @FieldResolver(() => User, { nullable: true })
+  creator(
+    @Root() root: Post,
+    @Ctx() { userLoader }: MyContext,
+  ): Promise<User | null> {
+    return userLoader.load(root.creatorId);
   }
 
   @Query(() => PostsResponse)
@@ -51,17 +58,8 @@ export class PostResolver {
 
     const posts = await appDataSource.query(
       `
-        SELECT p.*,
-        json_build_object(
-          'id', u.id,
-          'username', u.username,
-          'email', u.email,
-          'createdAt', u."createdAt",
-          'updatedAt', u."updatedAt"
-        ) AS creator
+        SELECT p.*
         FROM post p
-        INNER JOIN public.user u
-        ON u.id = p."creatorId"
         ${cursor ? 'WHERE p."createdAt" < $2' : ''}
         ORDER BY p."createdAt" DESC
         LIMIT $1
@@ -79,7 +77,7 @@ export class PostResolver {
   post(
     @Arg("id", () => Int) id: number,
   ): Promise<Post | null> {
-    return Post.findOne({ where: { id }, relations: { creator: true } });
+    return Post.findOne({ where: { id }});
   }
 
   @Mutation(() => Post)
@@ -97,26 +95,40 @@ export class PostResolver {
   @Mutation(() => Post, { nullable: true })
   async updatePost(
     @Arg("id", () => Int) id: number,
-    @Arg("title", () => String) title: string,
+    @Arg("title", () => String, { nullable: true }) title: string | null,
+    @Arg("text", () => String, { nullable: true }) text: string | null,
+    @Ctx() { req }: MyContext,
   ): Promise<Post | null> {
-    const post = await Post.findOne({ where: { id } });
+    const post = await Post.findOne({ where: { id, creatorId: req.session.userId } });
     if (!post) {
       return null;
     }
+    const updateOptions: { title?: string; text?: string } = {};
     if (title) {
-      await Post.update(
-        { id },
-        { title }
-      );
+      updateOptions.title = title;
     }
-    return post;
+    if (text) {
+      updateOptions.text = text;
+    }
+
+    const result = await appDataSource
+      .createQueryBuilder()
+      .update(Post)
+      .set(updateOptions)
+      .where('id = :id AND "creatorId" = :creatorId', { id, creatorId: req.session.userId })
+      .returning("*")
+      .execute();
+
+    return result.raw[0];
   }
 
   @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
   async deletePost(
     @Arg("id", () => Int) id: number,
+    @Ctx() { req }: MyContext,
   ): Promise<boolean> {
-    await Post.delete({ id });
+    await Post.delete({ id, creatorId: req.session.userId });
     return true;
   }
 

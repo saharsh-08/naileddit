@@ -17,6 +17,8 @@ import { PostResolver } from "./resolvers/post";
 import { MyContext } from "./types";
 import { UserResolver } from "./resolvers/user";
 import { __prod__, COOKIE_NAME } from "./constants";
+import { createUserLoader } from "./utils/createUserLoader";
+import { createUpdootLoader } from "./utils/createUpdootLoader";
 
 
 const main = async () => {
@@ -71,7 +73,9 @@ const main = async () => {
         {
           req,
           res,
-          redis: redisClient
+          redis: redisClient,
+          userLoader: createUserLoader,
+          updootLoader: createUpdootLoader,
         }
       ),
     }),
