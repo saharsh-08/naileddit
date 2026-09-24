@@ -1,4 +1,4 @@
-import { Box, Flex, Link, Button } from "@chakra-ui/react";
+import { Box, Flex, Link, Button, Heading } from "@chakra-ui/react";
 import NextLink from "next/link";
 import React from "react";
 import { useLogoutMutation, useMeQuery } from "../generated/graphql";
@@ -18,33 +18,44 @@ const NavBar: React.FC<NavBarProps> = ({}) => {
   else if (!data?.me) {
     body = (
       <>
-        <Link as={NextLink} href="/login" mr={4}>Login</Link>
-        <Link as={NextLink} href="/register">Register</Link>
+        <Button as={NextLink} href="/login" mr={4}>Login</Button>
+        <Button as={NextLink} href="/register">Register</Button>
       </>
     );
   }
   // If user is logged in
   else {
     body = (
-      <Flex align="center">
+      <>
         <Box mr={4} fontSize="large">{data.me.username}</Box>
-        <Box
-          as={Button}
+        <Button
           // Pass the additionalTypenames context to ensure the cache is updated correctly after logout
           onClick={() => logout({})}
           isLoading={logoutFetching}
+          fill="white"
         >
           Logout
-        </Box>
-      </Flex>
+        </Button>
+      </>
     );
   }
 
   return (
-    <Flex zIndex={1} position="sticky" top={0} bg="tomato" p={4} >
-      <Box ml={"auto"}>
-        {body}
-      </Box>
+    <Flex zIndex={1} position="sticky" top={0} bg="tomato" p={4}>
+      <Flex align="center" maxW={1000} flex={1} m="auto">
+        <Link as={NextLink} href="/" style={{ textDecoration: "none" }}>
+          <Heading size="lg">Naileddit</Heading>
+        </Link>   
+        <Link
+          as={NextLink} href="/create-post"
+          ml={6}
+        >
+          Create a new post!
+        </Link>
+        <Flex align="center" ml="auto">
+          {body}
+        </Flex>
+      </Flex>
     </Flex>
   );
 };

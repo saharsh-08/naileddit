@@ -1,6 +1,6 @@
 import Layout from "../components/Layout";
 import { usePostsQuery } from "../generated/graphql";
-import { Box, Button, Flex, Heading, Icon, IconButton, Link, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Heading, Icon, IconButton, Link, Stack, Text, textDecoration } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useState } from "react";
 import { ChevronUpIcon, ChevronDownIcon } from "@chakra-ui/icons";
@@ -17,18 +17,6 @@ const Index = () => {
 
   return (
     <Layout>
-      <Flex align="center" mb={4}>
-        <Heading>
-          Naileddit
-        </Heading>
-        <Link
-          as={NextLink} href="/create-post"
-          ml="auto"
-        >
-          Create a new post!
-        </Link>
-      </Flex>
-
       <div>
         {
           fetching && !data
@@ -40,7 +28,9 @@ const Index = () => {
                     <Flex key={p.id} p={5} borderWidth="1px">
                       <UpdootSection post={p}/>
                       <Box>
-                        <Heading fontSize="xl">{p.title}</Heading>
+                        <Link as={NextLink} href={`/post/${p.id}`} style={{ textDecoration: "none" }}>
+                          <Heading fontSize="xl">{p.title}</Heading>
+                        </Link>
                         <Text fontSize="small">Posted by: {p.creator.username}</Text>
                         <Text mt={4}>{p.textSnippet}</Text>
                       </Box> 

@@ -79,7 +79,7 @@ export class PostResolver {
   post(
     @Arg("id", () => Int) id: number,
   ): Promise<Post | null> {
-    return Post.findOne({ where: { id } });
+    return Post.findOne({ where: { id }, relations: { creator: true } });
   }
 
   @Mutation(() => Post)
