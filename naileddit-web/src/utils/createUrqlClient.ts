@@ -4,7 +4,6 @@ import {
   MeQuery,
   MeDocument,
   LoginMutation,
-  LogoutMutation,
   CreatePostMutation,
   VoteMutation,
   PostSnippetFragment,
@@ -85,8 +84,9 @@ const invalidatePosts = (cache: Cache) => {
 // The cache will be updated whenever a mutation (register/login/logout) runs.
 
 export const createUrqlClient = () => {
+  console.log("Server URL:", process.env.NEXT_PUBLIC_SERVER_URL);
   return new Client({
-    url: "http://localhost:4000/graphql",
+    url: process.env.NEXT_PUBLIC_SERVER_URL,
     exchanges: [
       // cacheExchange must run before fetchExchange so cache reads/writes wire up to subscribers correctly
       cacheExchange({

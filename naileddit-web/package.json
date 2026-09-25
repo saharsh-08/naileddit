@@ -4,7 +4,7 @@
     "dev": "next",
     "build": "next build",
     "start": "next start",
-    "gen": "graphql-codegen --config codegen.yaml"
+    "gen": "graphql-codegen -r dotenv/config --config codegen.yaml"
   },
   "dependencies": {
     "@chakra-ui/icons": "2.0.2",
@@ -13,6 +13,7 @@
     "@emotion/react": "11.9.3",
     "@emotion/styled": "11.9.3",
     "@urql/exchange-graphcache": "9.0.1",
+    "dotenv": "18.0.0",
     "formik": "2.4.9",
     "framer-motion": "6.3.0",
     "graphql": "16.14.2",

@@ -1,4 +1,4 @@
-FROM node:24
+FROM node:24-alpine
 
 # Creating a working directory for the application
 WORKDIR /usr/src/app
@@ -12,9 +12,9 @@ RUN yarn install
 
 COPY . .
 
-RUN yarn build
-
 ENV NODE_ENV=production
+
+RUN yarn build
 
 EXPOSE 8080
 

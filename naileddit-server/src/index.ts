@@ -83,7 +83,7 @@ const main = async () => {
   );
 
   app.listen(process.env.PORT, () => {
-    console.log("Server started on localhost:4000");
+    console.log(`Server started on localhost:${process.env.PORT}`);
   });
 
   // Creating a record in the post entity
