@@ -97,3 +97,13 @@ Dokku otherwise uses the `EXPOSE`d port (8080) for nginx, which is not published
 22. The apps are now available on the host port published for the dokku container's port 80 (8080 in step 2):
 - Server: `http://<app_name>.dokku.me:8080/graphql`
 - Web: `http://<web_app_name>.dokku.me:8080`
+
+## Running the web application again
+```
+docker start naileddit
+```
+
+## Stopping the web application
+```
+docker stop naileddit
+```
