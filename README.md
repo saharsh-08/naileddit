@@ -33,7 +33,7 @@ I'll add them when I deploy it to a VPS later.
 3. SSH into the container shell. \
 `docker exec -it naileddit /bin/bash`
 4. Create the server app. \
-`dokku apps:create <app_name>` \
+`dokku apps:create <app_name>`
 5. Install the database plugin you require. \
 `sudo dokku plugin:install https://github.com/dokku/dokku-postgres.git`
 6. Create a database service. \
@@ -48,7 +48,7 @@ I'll add them when I deploy it to a VPS later.
 `dokku redis:link <redis_name> <app_name>`
 10. After running these commands, you should be able to see the redis and database containers running. \
 `docker container list`
-11. Build the server and web images. Push them to a container registry. I am using GHCR. \
+11. Build the server and web images. Push them to a container registry. I am using GHCR.
 ```
 docker login ghcr.io -u <github_username> --password <pat>
 
@@ -60,16 +60,16 @@ docker push ghcr.io/<github_username>/naileddit/web:1
 ```
 Note: I have purposefully mentioned .env in the .dockerignore file. \
 Hence, when the docker image is created, all the environment variables are also copied. \
-This is not a good practice, but I have gone ahead with this approach for simplicity. \
+This is not a good practice, but I have gone ahead with this approach for simplicity.
 
 If you're going ahead with this approach, populate the .env file with the database URL and redis URL generated in the above steps.
 
-12. To pull the server's docker image, login to docker first if the image is uploaded to a private repository, and then pull. \
+12. To pull the server's docker image, login to docker first if the image is uploaded to a private repository, and then pull.
 ```
 docker login ghcr.io -u <github_username> --password <pat>
 docker pull ghcr.io/<github_username>/naileddit/server:1
 ```
-13. Add the environment variables for server. \
+13. Add the environment variables for server.
 ```
 dokku config:set api RESEND_API_KEY=<value>
 dokku config:set api SESSION_ID_COOKIE_SECRET=<value>
