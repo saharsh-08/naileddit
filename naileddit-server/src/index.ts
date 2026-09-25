@@ -27,7 +27,7 @@ const main = async () => {
   const app = express();
 
   const redisClient = createClient({
-    url: "redis://localhost:6379",
+    url: process.env.REDIS_URL,
     RESP: 2,
   });
   await redisClient.connect();
@@ -36,9 +36,10 @@ const main = async () => {
     disableTouch: true,
   });
 
+  app.set("proxy", 1);
   app.use(
     cors({
-      origin: "http://localhost:3000",
+      origin: process.env.CORS_ORIGIN,
       credentials: true,
     }),
     session({
@@ -81,7 +82,7 @@ const main = async () => {
     }),
   );
 
-  app.listen(4000, () => {
+  app.listen(process.env.PORT, () => {
     console.log("Server started on localhost:4000");
   });
 

@@ -1,3 +1,6 @@
+import dotenv from "dotenv"
+dotenv.config();
+
 import { __prod__ } from "./constants";
 import { Post } from "./entities/Post";
 import { User } from "./entities/User";
@@ -8,15 +11,13 @@ export const appDataSource = new DataSource({
   type: "postgres",
 
   // Migration options
-  synchronize: true,
+  synchronize: __prod__ ? false : true,
   migrations: [__dirname + "\\migrations\\**\\*{.js,.ts}"],
-  migrationsRun: false,
+  migrationsRun: __prod__ ? true : false,
 
   // Database connection options
-  database: "naileddit",
+  url: process.env.DATABASE_URL,
   entities: [Post, User, Updoot],
-  username: "postgres",
-  password: "postgres",
 
   // Logging options
   logging: !__prod__,

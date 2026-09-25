@@ -4,8 +4,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc -w",
-    "start": "node dist/index.js"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "migration:generate": "typeorm migration:generate ./src/migrations/Initial -d dist/typeorm.config.js"
   },
   "keywords": [],
   "author": "",

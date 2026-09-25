@@ -150,7 +150,7 @@ export class UserResolver {
     }
 
     const token = uuidv7();
-    const mailContent = `<a href="http://localhost:3000/change-password/${token}">Click here to reset your password</a>`;
+    const mailContent = `<a href="${process.env.CORS_ORIGIN}/change-password/${token}">Click here to reset your password</a>`;
 
     await redis.set(
       CHANGE_PASSWORD_PREFIX + token,
