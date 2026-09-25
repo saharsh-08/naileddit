@@ -84,7 +84,6 @@ const invalidatePosts = (cache: Cache) => {
 // The cache will be updated whenever a mutation (register/login/logout) runs.
 
 export const createUrqlClient = () => {
-  console.log("Server URL:", process.env.NEXT_PUBLIC_SERVER_URL);
   return new Client({
     url: process.env.NEXT_PUBLIC_SERVER_URL,
     exchanges: [

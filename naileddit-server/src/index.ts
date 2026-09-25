@@ -50,7 +50,8 @@ const main = async () => {
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        secure: __prod__,
+        // Uncomment the following line when deploying in production
+        // secure: __prod__,
         sameSite: "lax",
         maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
       },
