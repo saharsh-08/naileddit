@@ -22,3 +22,123 @@ Remove dependency       | npm uninstall <name>           | yarn remove <name>  |
 	2. Easier relations
 	3. Transaction management
 	4. Migrations
+
+3. What is Next.js?
+- Next.js is a React framework. 
+- It adds application-level features such as file-based routing, page rendering options, build tooling, and deployment support.
+- This project uses the Pages Router. The `src/pages` directory determines the URL routes; it does not use the newer `app` directory / App Router.
+
+4. File-based routing (Pages Router)
+- Each page file under `src/pages` automatically becomes a route. The filename and folders determine the URL:
+
+	File                                | URL
+	------------------------------------|----------------------
+	`pages/index.tsx`                   | `/`
+	`pages/login.tsx`                   | `/login`
+	`pages/post/[id].tsx`               | `/post/123`
+	`pages/post/edit/[id].tsx`          | `/post/edit/123`
+	`pages/change-password/[token].tsx` | `/change-password/<token>`
+
+- `index.tsx` is the route for its directory. Brackets such as `[id]` define a dynamic route segment, so one page handles many IDs/tokens.
+- This is different from manually creating an Express route: Next.js discovers page routes from the filesystem.
+
+5. Dynamic route parameters and the router
+- `useRouter` from `next/router` exposes the current route, query values, and navigation methods in a page/component.
+- For a file such as `pages/post/[id].tsx`, `router.query.id` contains the `id` URL segment. Query values may not be available on the first client render, so code should check their type/readiness before using them. `getPostFromUrl` guards the ID and pauses its GraphQL query until there is a usable value.
+- This project uses `router.push()` to navigate after login/form submissions, `router.replace()` for redirects that should not leave the previous page in browser history, `router.back()` to return after editing, and `router.reload()` after logout.
+
+	```tsx
+	const router = useRouter();
+	const { id } = router.query;
+
+	if (typeof id === "string") {
+		// Use the route parameter, for example to request a post.
+	}
+	```
+
+6. Client-side navigation with `next/link`
+- `Link` from `next/link` navigates between internal routes without a full browser-page reload. Next.js can load the destination route in advance, making navigation feel faster.
+- The app uses it for post links and navigation to login, registration, and create-post pages. Chakra UI components are composed with the Next.js link using `as={NextLink}`.
+- Use a normal external anchor for a different website; `next/link` is for app routes.
+
+7. Custom App: shared providers and page state
+- `src/pages/_app.tsx` is the custom App component. Next.js renders every page through it, making it the place for UI/providers and global setup shared by all routes.
+- This project's `_app.tsx` wraps every page in the urql `Provider` and Chakra UI's `ChakraProvider`, so pages can access the GraphQL client and shared theme without repeating the setup.
+- Next.js supplies the selected page as `Component` and its page props as `pageProps`:
+
+	```tsx
+	const MyApp = ({ Component, pageProps }: AppProps) => (
+		<ChakraProvider theme={theme}>
+			<Component {...pageProps} />
+		</ChakraProvider>
+	);
+	```
+
+8. Rendering and data fetching in this project
+- Next.js Pages Router supports server-side rendering with `getServerSideProps`, build-time static generation with `getStaticProps` (and `getStaticPaths` for dynamic routes), and client-side data fetching from React components.
+- This project does not define those Next.js data-fetching functions. Its pages use urql hooks such as `usePostsQuery` and `usePostQuery`, which request GraphQL data from the browser after the page loads. Loading and not-found states are handled by the React page components.
+- Without a custom `getInitialProps` or the data-fetching functions above, Next.js can statically render the initial page shell at build time and hydrate it in the browser. This does not mean the GraphQL post data is built into that HTML; the urql query loads it on the client.
+- Authentication in `useIsAuth` is also a client-side check: it queries `me`, then redirects to `/login` if there is no user. It is not a server-side route guard, so authorization must still be enforced by the server/API.
+
+9. Environment variables
+- In Next.js, variables prefixed with `NEXT_PUBLIC_` are exposed to browser-side code. They are configuration, not secrets; never put passwords, private keys, or server-only credentials in them.
+
+10. Next.js configuration and standalone deployment
+- `next.config.js` sets `output: "standalone"`. During `next build`, Next.js creates `.next/standalone` with the server and the production dependencies needed to run the app, reducing what a container needs to copy.
+- The Dockerfile copies that output and `.next/static` into the runtime image, then starts the generated `server.js` with Node.
+
+11. GraphQL operations in `.graphql` files
+- Files under `src/graphql` hold GraphQL documents: queries read data, mutations change data, and fragments define reusable selections of fields.
+- For example, `queries/posts.graphql` declares `Posts` with `$limit` and `$cursor` variables. The operation is a string-shaped GraphQL document, not a Next.js route or a database query. The server validates and executes it against its GraphQL schema.
+- Variables are sent separately from the document. This keeps one operation reusable with different values and lets GraphQL Code Generator infer the expected variable and result types.
+- `PostSnippet.graphql` is a fragment reused by the posts query. Fragments reduce duplicated field lists and keep the list's post shape consistent where that fragment is used.
+- `codegen.yaml` points codegen at the server schema URL and `src/graphql/**/*.graphql`. `yarn gen` generates `src/generated/graphql.ts`, including TypeScript result/variable types, document constants, and urql hooks such as `usePostsQuery` and `useVoteMutation`.
+- Treat `src/generated/graphql.ts` as generated output. Change the `.graphql` source, then run codegen; editing generated output directly is liable to be overwritten.
+
+12. How a query travels through urql
+- `pages/_app.tsx` creates one urql `Client` with `useMemo` and provides it to every page through urql's `Provider`. A page hook such as `usePostsQuery` gets that shared client from React context.
+- A query hook returns a result state (including `data`, `fetching`, and `error`) and subscribes the component to updates. Changing query variables, such as the cursor on the home page, represents a different query instance.
+- The configured exchanges form urql's operation pipeline: `cacheExchange` checks and updates Graphcache, `errorExchange` watches network results and redirects to `/login` for the server's unauthenticated error, and `fetchExchange` sends GraphQL HTTP requests.
+- `fetchOptions.credentials: "include"` lets the browser send the server's session cookie with requests. It does not put the cookie into the GraphQL cache. The preflight header is for the API's CORS/CSRF setup.
+- The normal query policy is cache-first: complete cached data can be returned without a network request; missing or invalidated data is fetched. This project does not set a different `requestPolicy` on its queries.
+
+13. Graphcache and normalized data
+- `@urql/exchange-graphcache` is a normalized GraphQL cache. Instead of storing only a separate copy of every query response, it stores entities by identity (normally `__typename` plus `id`) and query results as references to those entities.
+- For example, the home-page query and a post-detail query can both refer to the same `Post:123`. When a response updates that post entity, components reading either query can see the changed fields without maintaining two independent post copies.
+- Graphcache can automatically merge fields from a mutation response when it can identify the returned entity. The `updatePost` mutation returns an `id` and changed post fields, so Graphcache can merge those fields into the normalized `Post` entity.
+- The `PostsResponse` wrapper has no stable ID, so the client configures `keys: { PostsResponse: () => null }`. This tells Graphcache to keep that wrapper embedded in its parent result rather than treating it as a separately addressable entity. The posts inside it still have their own identities.
+- This client does not configure persistent storage. Graphcache lives in memory for the lifetime of the client/page session; a full browser reload creates a new client and starts with an empty cache.
+
+14. Why this project uses Graphcache
+- The app repeatedly reads overlapping post data in the feed, post detail, and voting controls. A normalized cache shares those records and keeps subscribed views in sync.
+- A mutation response alone does not always describe how to update a paginated list. Graphcache lets the app express the missing rules once, in the client configuration, instead of manually refetching or copying data in every component.
+- This is especially useful here because `vote` returns only a Boolean, and create/delete affect membership in a cursor-paginated list. Those responses do not contain enough information to update all cached views automatically.
+- The tradeoff is that custom cache rules are application logic: they must match the server's behavior, and a wrong rule can make the UI disagree with the server until data is fetched again.
+
+15. Cursor pagination and the custom resolver
+- The home page starts with `{ limit: 10, cursor: null }`. “Load More” uses the last displayed post's `createdAt` as the next cursor. The server returns older posts and a `hasMore` flag.
+- Graphcache normally stores results for different argument combinations as separate fields. The `Query.posts` resolver in `createUrqlClient.ts` inspects all cached `posts` field entries, joins their post references, and combines their `hasMore` state so the component can read one accumulated list.
+- The resolver also checks whether the exact requested arguments are cached. If not, it sets `info.partial = true`; this tells Graphcache that the cached pages do not fully satisfy the request and that the missing page needs to be fetched.
+- Pagination depends on stable server ordering and cursor semantics. Here the server sorts newest first and uses a strict `createdAt < cursor` condition, so the cursor is a timestamp boundary rather than a numeric page number.
+
+16. When mutations update or invalidate the cache
+- **Register:** on success, `cache.updateQuery` replaces the cached `Me` query with the returned user. Validation errors leave the old cached result unchanged.
+- **Login:** similarly updates `Me`, and invalidates all cached `Query.posts` variants. `voteStatus` depends on the currently authenticated user, so cached feed results from before login may contain the wrong per-user vote state.
+- **Create post:** invalidates every cached `Query.posts` field. A mutation can add the new `Post` entity, but it cannot safely infer its position in every cursor page, so the feed is fetched again instead of patched by hand.
+- **Update post:** the mutation returns the post `id` and changed fields. Normalized entity merging updates matching cached `Post` records; no explicit update handler is needed for this case.
+- **Vote:** the server returns only `true`, so the custom handler reads the cached post fragment and writes new `points` and `voteStatus`. It handles first vote, changing direction, and clicking the already-selected direction to remove a vote. This is a response-based cache update, not an optimistic update: it runs after the mutation result is received.
+- **Delete post:** invalidates the normalized `Post:<id>` entity. The mutation returns only a Boolean, so it does not directly remove a reference from the feed. Invalidating the entity marks dependent cached data stale so active dependent queries can be refreshed; the server's next result determines the final list.
+- **Logout:** the cache update handler in `createUrqlClient.ts` is commented out. `NavBar` runs the logout mutation and then calls `router.reload()`, which resets the in-memory client and causes `Me` to be queried again without the session cookie. The NavBar comment mentions `additionalTypenames`, but this client does not configure that option.
+- `invalidatePosts` uses `cache.inspectFields("Query")` to find each cached `posts` field and invalidates it with its own arguments. This matters because page one and later cursor pages are distinct cached fields. Invalidation is not the same as deleting the server record; it marks client data stale so query results can be obtained again.
+
+17. Cache behavior: urql versus Next.js
+- Graphcache is a browser-side GraphQL response/entity cache. It decides whether urql can satisfy a query locally, merge mutation results, or needs to request the GraphQL API.
+- Next.js has separate route-rendering and data-fetching behavior. Its server-side `fetch` caching/revalidation features do not automatically cache urql requests made in a browser, and Graphcache invalidation does not revalidate a Next.js page.
+- This project uses the Pages Router and does not define `getServerSideProps`, `getStaticProps`, `getStaticPaths`, or server-side GraphQL prefetching. The pages use urql hooks, so GraphQL data is loaded client-side rather than passed in as Next.js page props.
+- The app also does not configure urql's `ssrExchange` or an urql/Next.js integration to collect server query results and hydrate them in the browser. Therefore, Next.js rendering a page does not mean the posts query has been server-rendered into the page data.
+- `output: "standalone"` controls the production deployment bundle; it is not a data cache or a revalidation strategy.
+
+18. A useful mental model
+- The GraphQL server and database are the source of truth. The session cookie identifies the current user to the server.
+- `.graphql` files describe operations; codegen turns those documents into typed hooks; page/components call the hooks; urql sends operations through its exchange pipeline; Graphcache supplies or updates client-side data; `fetchExchange` communicates with the API when needed.
+- For new mutations, ask: does the response identify an existing entity so normalization can merge it? Does it change a list's membership/order? Does its result depend on the current user? Choose an entity update, `cache.updateQuery`/fragment write, or invalidation/refetch based on those answers.
